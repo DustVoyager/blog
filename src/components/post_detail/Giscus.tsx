@@ -24,10 +24,10 @@ export default function Giscus() {
     scriptElem.async = true;
     scriptElem.crossOrigin = "anonymous";
 
-    scriptElem.setAttribute("data-repo", repoName);
-    scriptElem.setAttribute("data-repo-id", repoId);
+    scriptElem.setAttribute("data-repo", "dustvoyager/blog");
+    scriptElem.setAttribute("data-repo-id", "R_kgDOM2812w");
     scriptElem.setAttribute("data-category", "Comments");
-    scriptElem.setAttribute("data-category-id", categoryId);
+    scriptElem.setAttribute("data-category-id", "DIC_kwDOM281284CizvN");
     scriptElem.setAttribute("data-mapping", "pathname");
     scriptElem.setAttribute("data-strict", "0");
     scriptElem.setAttribute("data-reactions-enabled", "1");
