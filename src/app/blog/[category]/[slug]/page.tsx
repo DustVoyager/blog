@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { PostBody } from "@/components/post_detail/PostBody";
 import { PostHeader } from "@/components/post_detail/PostHeader";
+import TocTop from "@/components/post_detail/TableOfContentTop";
 import TocSidebar from "@/components/post_detail/TableOfContentSidebar";
 import {
   getPostDetail,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/post";
 import { baseDomain } from "@/config/const";
 import Giscus from "@/components/post_detail/Giscus";
+import FloatingButton from "@/components/common/FloatingButton";
 
 type Props = {
   params: { category: string; slug: string };
@@ -60,11 +62,13 @@ export default async function Page({ params: { category, slug } }: Props) {
   return (
     <div className="prose mx-auto w-full max-w-[800px] px-5 sm:px-6">
       <PostHeader post={post} />
+      <TocTop toc={toc} />
       <article className="relative">
         <PostBody post={post} />
         <TocSidebar toc={toc} />
       </article>
       <Giscus />
+      <FloatingButton />
     </div>
   );
 }
