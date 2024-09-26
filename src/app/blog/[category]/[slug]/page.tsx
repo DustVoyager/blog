@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { PostBody } from "@/components/post_detail/PostBody";
 import { PostHeader } from "@/components/post_detail/PostHeader";
-import { getPostDetail, getPostPaths, parsePostAbstract } from "@/lib/post";
+import TocSidebar from '@/components/post_detail/TableOfContentSidebar';
+import { getPostDetail, getPostPaths, parsePostAbstract, parseToc } from "@/lib/post";
 import { baseDomain } from "@/config/const";
 
 type Props = {
@@ -48,12 +49,14 @@ export function generateStaticParams() {
 
 export default async function Page({ params: { category, slug } }: Props) {
   const post = await getPostDetail(category, slug);
+  const toc = parseToc(post.content);
 
   return (
     <div className="prose mx-auto w-full max-w-[800px] px-5 sm:px-6">
       <PostHeader post={post} />
       <article className="relative">
         <PostBody post={post} />
+        <TocSidebar toc={toc} />
       </article>
     </div>
   );

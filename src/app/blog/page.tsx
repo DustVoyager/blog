@@ -1,3 +1,5 @@
+import PostListPage from "@/components/post_list/PostListPage";
+
 export default function BlogPage() {
-  return <div>블로그 페이지</div>;
+  return <PostListPage />;
 }

@@ -1,8 +1,9 @@
 import type { Config } from "tailwindcss";
 
-const config: Config = {
+const config = {
   darkMode: ["class"],
   content: ["./src/**/*.{ts,tsx}"],
+  prefix: "",
   theme: {
     container: {
       center: true,
@@ -19,6 +20,7 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        galaxy: "hsl(var(--galaxy))",
         background: "var(--background)",
         foreground: "var(--foreground)",
         primary: {
@@ -56,6 +58,10 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        point: {
+          DEFAULT: "hsl(var(--point))",
+          foreground: "hsl(var(--point-foreground))",
         },
       },
       typography: {
@@ -122,8 +128,8 @@ const config: Config = {
             pre: {
               paddingRight: 0,
               paddingLeft: 0,
-              color: "var(--shiki-light)",
-              backgroundColor: "var(--shiki-light-bg)",
+              backgroundColor: "var(--shiki-dark-bg)",
+              color: "var(--shiki-dark)",
               border: "1px solid #e5e7eb",
             },
 
@@ -139,14 +145,14 @@ const config: Config = {
             },
 
             "pre code span": {
-              color: "var(--shiki-light)",
+              color: "var(--shiki-dark)",
             },
             ".dark pre code span": {
               color: "var(--shiki-dark)",
             },
 
             "[data-highlighted-line]": {
-              backgroundColor: "rgba(253, 224, 71, 0.2)",
+              backgroundColor: "rgba(38, 79, 120, 0.4)",
             },
 
             ".project img": {
@@ -170,8 +176,23 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
     },
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
-};
+} satisfies Config;
+
 export default config;
