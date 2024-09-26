@@ -1,9 +1,15 @@
 import { Metadata } from "next";
 import { PostBody } from "@/components/post_detail/PostBody";
 import { PostHeader } from "@/components/post_detail/PostHeader";
-import TocSidebar from '@/components/post_detail/TableOfContentSidebar';
-import { getPostDetail, getPostPaths, parsePostAbstract, parseToc } from "@/lib/post";
+import TocSidebar from "@/components/post_detail/TableOfContentSidebar";
+import {
+  getPostDetail,
+  getPostPaths,
+  parsePostAbstract,
+  parseToc,
+} from "@/lib/post";
 import { baseDomain } from "@/config/const";
+import Giscus from "@/components/post_detail/Giscus";
 
 type Props = {
   params: { category: string; slug: string };
@@ -58,6 +64,7 @@ export default async function Page({ params: { category, slug } }: Props) {
         <PostBody post={post} />
         <TocSidebar toc={toc} />
       </article>
+      <Giscus />
     </div>
   );
 }
