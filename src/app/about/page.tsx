@@ -10,8 +10,8 @@ import Link from "next/link";
 
 const data = {
   name: "오수빈",
-  about: "프론트엔드 개발자 오수빈입니다.",
-  summary: "",
+  about: "같이 일하고 싶은 개발자 오수빈입니다.",
+  introduce: "",
   contact: {
     email: "ohsubin@kakao.com",
     social: [
@@ -107,7 +107,7 @@ const data = {
 export function generateMetadata() {
   return {
     title: `${data.name} | ${data.about}`,
-    description: data.summary,
+    description: data.introduce,
   };
 }
 
@@ -161,6 +161,11 @@ export default function AboutPage() {
           </D.Dialog>
         )}
       </div>
+
+      <section className="mt-10">
+        <h3 className="text-2xl font-bold">Introduce.</h3>
+        <p>{data.introduce}</p>
+      </section>
 
       <section className="mt-10">
         <h3 className="text-2xl font-bold">Work Experience.</h3>
