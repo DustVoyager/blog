@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import IconGithub from "@/components/icon/Github";
 import { Button } from "@/components/ui/button";
 import * as D from "@/components/ui/dialog";
@@ -25,8 +27,10 @@ const data = {
     {
       id: "1",
       company: "잡플래닛",
+      description:
+        "기업 리뷰, 연봉 정보, 채용 공고를 제공하는 취업 정보 플랫폼입니다.",
       link: "https://www.jobplanet.co.kr",
-      position: "Frontend Developer",
+      position: "프론트엔드 개발자",
       start: "2021. 05",
       end: "2024. 06",
     },
@@ -39,7 +43,7 @@ const data = {
       end: "2024.06",
       description:
         "잡플래닛은 기존에 Ruby on Rails 환경에서 React를 활용하여 서비스를 운영해왔었는데 프론트엔드와 백엔드가 밀접하게 묶여 있는 구조로 인해 문제점들이 있었습니다. 그것을 해결하기 위해 NextJs을 활용하여 새로운 프론트엔드 환경을 구축하게 되었습니다",
-      task: [
+      tasks: [
         "잡플래닛 next.js 전환 프로젝트",
         "Next.js 환경 셋팅 및 기술 구현",
         "Javascript에서 Typescript 으로 전환",
@@ -60,7 +64,7 @@ const data = {
       end: "2023.12",
       description:
         "잡플래닛 기업관리센터는 채용 서비스와 밀접한 관련이 있는 프로젝트로, 채용 과정에서 기업이 지원자들을 관리할 수 있는 B2B 서비스입니다. 기업관리센터는 유료 서비스로, 다양한 기업의 요구에 맞춰 소통하는 것이 중요했습니다. 이 프로젝트는 기존의 백엔드 코드로 운영되어 프론트엔드 작업이 어려웠으며, 디자인이 오래되고 느리며 API를 사용하지 않아 비효율적이었습니다. 이러한 문제를 해결하기 위해 저는 프론트엔드 코드로 전환하자고 제안하였고, 사용자 친화적인 디자인으로 변경하며 React를 활용하여 프로젝트를 진행했습니다. 결과적으로, 잡플래닛 기업 담당 직원들과 서비스를 이용하는 기업들 모두 큰 만족을 표했으며, 이는 매출 증대로 이어져 많은 회사가 기업 서비스를 구독하게 되었습니다.",
-      task: [
+      tasks: [
         "아이데이션 회의부터 서비스 런칭까지 모든 과정 참여",
         "프로젝트 제안 및 기획: 기존 백엔드 중심의 시스템을 프론트엔드로 전환 제안 및 기획",
         "프론트엔드 개발: React와 REST API를 활용하여 사용자 친화적인 인터페이스 구현",
@@ -87,7 +91,7 @@ const data = {
         이 과정에서 React를 활용해 사용자 친화적인 인터페이스를 구축하였으며, 성능 최적화와 코드 품질 향상을 위해 지속적으로 노력하였고. 
         저에게 협업과 기술적 성장의 중요한 기회가 되었습니다.
         `,
-      task: [
+      tasks: [
         "서비스 기획 및 아이데이션 회의에서 적극적으로 참여하여 혁신적인 아이디어 제시",
         "프로젝트의 모든 단계에 걸쳐 일관된 비전과 목표를 유지하며 협업",
         "프론트엔드 기술 환경 셋팅 및 기능 구현",
@@ -158,31 +162,56 @@ export default function AboutPage() {
         )}
       </div>
 
-      <section>
+      <section className="mt-10">
         <h3 className="text-2xl font-bold">Work Experience.</h3>
-        {data.works.map((work) => (
-          <div key={work.company}>
-            <h4>
-              <Link href={work.link}>{work.company}</Link>
-            </h4>
-            <em>{work.position}</em>
-            <span>
-              {work.start} - {work.end}
-            </span>
+        <div className="mt-4 flex flex-col md:flex-row">
+          <div className="w-full sm:w-1/3">
+            {data.works.map((work) => (
+              <Fragment key={work.company}>
+                <div className="flex flex-row items-center gap-x-2 text-base">
+                  <h4 className="text-lg font-semibold leading-none">
+                    <Link href={work.link}>{work.company}</Link>
+                  </h4>
+                  <span className="text-sm tabular-nums text-gray-500">
+                    {work.start} - {work.end}
+                  </span>
+                </div>
+                <strong className="block mt-2 font-semibold not-italic">
+                  {work.position}
+                </strong>
+              </Fragment>
+            ))}
           </div>
-        ))}
-        {data.projects.map((project) => (
-          <div key={project.name}>
-            <strong>{project.name}</strong>
-            <span>
-              {project.start} - {project.end}
-            </span>
-            <p>{project.description}</p>
-          </div>
-        ))}
+          <article className="w-full sm:w-2/3 mt-4 sm:mt-0">
+            {data.projects.map((project, index) => (
+              <div key={project.name} className={index !== 0 ? "mt-4" : ""}>
+                <strong>{project.name}</strong>
+                <span className="ml-2 text-sm tabular-nums text-gray-500">
+                  {project.start} - {project.end}
+                </span>
+
+                <em className="block mt-2 font-semibold not-italic">
+                  description
+                </em>
+                <p className="">{project.description}</p>
+
+                <em className="block mt-2 font-semibold not-italic">task</em>
+                <ul className="">
+                  {project.tasks.map((task) => (
+                    <li key={task} className="text-gray-700">
+                      - {task}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </article>
+        </div>
       </section>
 
-      <h3 className="text-2xl font-bold">Too Much Informatin</h3>
+      <section className="mt-10">
+        <h3 className="text-2xl font-bold">Too Much Informatin</h3>
+      </section>
     </div>
   );
 }
