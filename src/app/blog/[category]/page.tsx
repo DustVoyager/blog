@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 
-import { baseDomain, blogName, blogThumbnailURL } from "@/config/const";
+import { baseDomain, blogName, blogThumbnail } from "@/config/const";
 import { getCategoryList, getCategoryPublicName } from "@/lib/post";
 import PostListPage from "@/components/post_list/PostListPage";
 
@@ -28,11 +28,11 @@ export async function generateMetadata({
     openGraph: {
       title,
       url,
-      images: [blogThumbnailURL],
+      images: [blogThumbnail],
     },
     twitter: {
       title,
-      images: [blogThumbnailURL],
+      images: [blogThumbnail],
     },
   };
 }

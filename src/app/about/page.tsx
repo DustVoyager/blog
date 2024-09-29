@@ -175,7 +175,7 @@ export default function AboutPage() {
               <Fragment key={work.company}>
                 <div className="flex flex-row items-center gap-x-2 text-base">
                   <h4 className="text-lg font-semibold leading-none">
-                    <Link href={work.link}>{work.company}</Link>
+                    <Link href={work.link}>🏢 {work.company}</Link>
                   </h4>
                   <span className="text-sm tabular-nums text-gray-500">
                     {work.start} - {work.end}
