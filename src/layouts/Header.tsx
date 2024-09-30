@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const navList = [
   { name: "About", href: "/about" },
-  { name: "blog", href: "/blog" },
+  { name: "Blog", href: "/blog" },
 ];
 
 export default function Header() {
