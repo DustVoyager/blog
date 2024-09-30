@@ -11,7 +11,8 @@ import Link from "next/link";
 const data = {
   name: "오수빈",
   about: "같이 일하고 싶은 개발자 오수빈입니다.",
-  introduce: "",
+  introduce:
+    "프로젝트의 아이데이션 단계부터 배포까지 모든 과정에 참여하며 사용자 중심의 웹 어플리케이션을 구축해왔습니다. \n마크업 개발자의 경험으로 웹표준/웹 접근성에 강점을 가지고 있으며,\n이를 통해 다양한 환경에서 사용자들에게 최적의 경험을 제공하기 위해 고민하고 있습니다.",
   contact: {
     email: "ohsubin@kakao.com",
     social: [
@@ -22,6 +23,7 @@ const data = {
       },
     ],
   },
+  skills: ["Javascript", "Typescript", "React", "Nextjs"],
   military_service: "대한민국 육군 부사관, 중사",
   works: [
     {
@@ -102,6 +104,15 @@ const data = {
       skills: ["React", "Redux", "Sass"],
     },
   ],
+  tmis: [
+    "육군에서 부사관으로 6년 동안 복무하였습니다.",
+    "책과 서점을 좋아합니다. e-book 보다는 종이 책의 질감을 좋아합니다. 서점에서 풍기는 종이책의 냄새를 좋아하고 책장에 종류별로 진열하는 것을 좋아합니다.",
+    "사람 만나는 것을 좋아합니다.(반전으로 MBTI는 내향형입니다 🫢) 커피챗을 통해 다양한 사람들을 만나서 이야기를 나눠보고 인사이트를 넓히는 것을 좋아합니다.",
+    "8살 된 푸들 제니를 키우고 있습니다. 강아지를 사랑하고 어떻게 하면 행복하게 해줄 수 있을지 고민합니다.",
+    "최신 트렌드에 민감하고 관심을 갖고 있습니다. 다양한 OTT를 구독하여 콘텐츠를 접하고, 유행하는 옷은 꼭 입어보며 트렌드를 따라가는 것을 좋아합니다.",
+    "역사에 관심이 많습니다. 우연한 계기로 한국사 자격증을 취득하게 되면서 역사에 대한 공부를 많이 진행하였고 역사적인 인물들과 사건들에 대해 관심이 많습니다.",
+    "회사에서 3년 동안 제과제빵 동호회 활동을 하였습니다. 부회장과 총무를 맡아서 동호회 활동을 진행하였고, 다양한 직군의 동료들과 소통하며 가까워지는법을 배웠습니다.",
+  ],
 };
 
 export function generateMetadata() {
@@ -114,57 +125,77 @@ export function generateMetadata() {
 export default function AboutPage() {
   return (
     <div className="mx-auto mt-14 w-full max-w-[800px] px-5 sm:px-6">
-      <h2 className="mb-4 text-3xl font-bold">{data.name}</h2>
-      <p className="max-w-md text-pretty text-gray-600 print:text-[12px]">
-        {data.about}
-      </p>
-      <div className="flex justify-center gap-x-2 pt-1 text-sm text-gray-600 sm:justify-start print:hidden">
-        {data.contact.social.map((social) => (
-          <Button
-            key={social.name}
-            className="size-8"
-            variant="outline"
-            size="icon"
-            asChild
-          >
-            <a href={social.url} target="_blank">
-              <social.icon className="size-4" />
-            </a>
-          </Button>
-        ))}
-        {data.contact.email && (
-          <D.Dialog>
-            <D.DialogTrigger>
-              <Button className="size-8" variant="outline" size="icon" asChild>
-                <MailIcon className="size-4" />
-              </Button>
-            </D.DialogTrigger>
-            <D.DialogContent className="max-w-[300px]">
-              <D.DialogHeader>
-                <D.DialogTitle className="p-0">Email Address</D.DialogTitle>
-                <D.DialogDescription></D.DialogDescription>
-              </D.DialogHeader>
-              <div className="flex items-center space-x-2">
-                <div className="grid flex-1 gap-2">
-                  <label htmlFor="link" className="sr-only">
-                    Link
-                  </label>
-                  <Input id="link" defaultValue={data.contact.email} readOnly />
+      <div className="flex-1 space-y-1.5 text-center sm:text-start">
+        <h2 className="mb-4 text-3xl font-bold">{data.name}</h2>
+        <p className="max-w-md text-pretty text-gray-600 print:text-[12px]">
+          {data.about}
+        </p>
+        <div className="flex justify-center gap-x-2 pt-1 text-sm text-muted-foreground sm:justify-start print:hidden">
+          {data.contact.social.map((social) => (
+            <Button
+              key={social.name}
+              className="size-8"
+              variant="outline"
+              size="icon"
+              asChild
+            >
+              <a href={social.url} target="_blank">
+                <social.icon className="size-4" />
+              </a>
+            </Button>
+          ))}
+          {data.contact.email && (
+            <D.Dialog>
+              <D.DialogTrigger>
+                <Button
+                  className="size-8"
+                  variant="outline"
+                  size="icon"
+                  asChild
+                >
+                  <MailIcon className="size-4" />
+                </Button>
+              </D.DialogTrigger>
+              <D.DialogContent className="max-w-[300px]">
+                <D.DialogHeader>
+                  <D.DialogTitle className="p-0">Email Address</D.DialogTitle>
+                  <D.DialogDescription></D.DialogDescription>
+                </D.DialogHeader>
+                <div className="flex items-center space-x-2">
+                  <div className="grid flex-1 gap-2">
+                    <label htmlFor="link" className="sr-only">
+                      Link
+                    </label>
+                    <Input
+                      id="link"
+                      defaultValue={data.contact.email}
+                      readOnly
+                    />
+                  </div>
+                  <CopyLinkButton
+                    variant="default"
+                    url={data.contact.email}
+                    className="p-3"
+                  />
                 </div>
-                <CopyLinkButton
-                  variant="default"
-                  url={data.contact.email}
-                  className="p-3"
-                />
-              </div>
-            </D.DialogContent>
-          </D.Dialog>
-        )}
+              </D.DialogContent>
+            </D.Dialog>
+          )}
+        </div>
+        <div className="hidden flex-col gap-x-1 text-sm text-muted-foreground print:flex print:text-[12px]">
+          {data.contact.email && (
+            <a href={`mailto:${data.contact.email}`}>
+              <span className="underline">{data.contact.email}</span>
+            </a>
+          )}
+        </div>
       </div>
 
       <section className="mt-10">
         <h3 className="text-2xl font-bold">Introduce.</h3>
-        <p>{data.introduce}</p>
+        <p className="mt-2 leading-6 text-muted-foreground sm:whitespace-pre-wrap whitespace-normal">
+          {data.introduce}
+        </p>
       </section>
 
       <section className="mt-10">
@@ -175,7 +206,9 @@ export default function AboutPage() {
               <Fragment key={work.company}>
                 <div className="flex flex-row items-center gap-x-2 text-base">
                   <h4 className="text-lg font-semibold leading-none">
-                    <Link href={work.link}>🏢 {work.company}</Link>
+                    <Link href={work.link} className="hover:text-blue-600">
+                      🏢 {work.company}
+                    </Link>
                   </h4>
                   <span className="text-sm tabular-nums text-gray-500">
                     {work.start} - {work.end}
@@ -200,13 +233,18 @@ export default function AboutPage() {
                 <em className="block mt-4 font-semibold not-italic">
                   Description.
                 </em>
-                <p className="">{project.description}</p>
+                <p className="mt-2 text-gray-600 text-sm">
+                  {project.description}
+                </p>
 
                 <em className="block mt-4 font-semibold not-italic">Task.</em>
-                <ul className="">
+                <ul className="mt-2 list-disc space-y-1">
                   {project.tasks.map((task) => (
-                    <li key={task} className="text-gray-700">
-                      - {task}
+                    <li
+                      key={task}
+                      className="ml-5 text-gray-600 text-pretty text-sm"
+                    >
+                      {task}
                     </li>
                   ))}
                 </ul>
@@ -214,10 +252,13 @@ export default function AboutPage() {
                 <em className="block mt-4 font-semibold not-italic">
                   Tech Skill.
                 </em>
-                <ul>
+                <ul className="mt-2 list-disc space-y-1">
                   {project.skills.map((skill) => (
-                    <li key={skill} className="text-gray-700">
-                      - {skill}
+                    <li
+                      key={skill}
+                      className="ml-5 text-gray-600 ext-pretty text-sm"
+                    >
+                      {skill}
                     </li>
                   ))}
                 </ul>
@@ -228,7 +269,17 @@ export default function AboutPage() {
       </section>
 
       <section className="mt-10">
-        <h3 className="text-2xl font-bold">Too Much Informatin</h3>
+        <h3 className="text-2xl font-bold">Too Much Information.</h3>
+        <ul className="mt-2 list-disc space-y-1">
+          {data.tmis.map((tmi) => (
+            <li
+              key={tmi}
+              className="ml-5 text-gray-600 text-pretty text-[14px]"
+            >
+              {tmi}
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );
