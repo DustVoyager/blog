@@ -189,22 +189,35 @@ export default function AboutPage() {
           </div>
           <article className="w-full sm:w-2/3 mt-4 sm:mt-0">
             {data.projects.map((project, index) => (
-              <div key={project.name} className={index !== 0 ? "mt-4" : ""}>
-                <strong>{project.name}</strong>
-                <span className="ml-2 text-sm tabular-nums text-gray-500">
-                  {project.start} - {project.end}
-                </span>
+              <div key={project.name} className={index !== 0 ? "mt-10" : ""}>
+                <div className="flex items-center">
+                  <strong className="text-lg">{project.name}</strong>
+                  <span className="ml-2 text-sm tabular-nums text-gray-500">
+                    {project.start} - {project.end}
+                  </span>
+                </div>
 
-                <em className="block mt-2 font-semibold not-italic">
-                  description
+                <em className="block mt-4 font-semibold not-italic">
+                  Description.
                 </em>
                 <p className="">{project.description}</p>
 
-                <em className="block mt-2 font-semibold not-italic">task</em>
+                <em className="block mt-4 font-semibold not-italic">Task.</em>
                 <ul className="">
                   {project.tasks.map((task) => (
                     <li key={task} className="text-gray-700">
                       - {task}
+                    </li>
+                  ))}
+                </ul>
+
+                <em className="block mt-4 font-semibold not-italic">
+                  Tech Skill.
+                </em>
+                <ul>
+                  {project.skills.map((skill) => (
+                    <li key={skill} className="text-gray-700">
+                      - {skill}
                     </li>
                   ))}
                 </ul>
