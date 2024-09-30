@@ -15,6 +15,7 @@ const config = {
     extend: {
       fontFamily: {
         pretendard: ["Pretendard"],
+        serif: ["var(--font-serif)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
