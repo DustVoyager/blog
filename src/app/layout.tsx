@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full scroll-my-20 scroll-smooth">
-      <body className="font-serif flex min-h-screen flex-col">
+      <body className="font-pretendard flex min-h-screen flex-col">
         <ThemeProvider>
           <Header />
           <main className="mt-[64px] flex flex-1 flex-col">{children}</main>

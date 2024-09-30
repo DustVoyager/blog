@@ -17,10 +17,10 @@ export function generateMetadata() {
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto mt-14 w-full max-w-[800px] space-y-8 px-5 sm:px-6">
+    <div className="mx-auto font-serif mt-14 w-full max-w-[800px] space-y-8 px-5 sm:px-6">
       <div className="flex-1 space-y-1.5 text-center sm:text-start">
-        <h2 className="font-serif mb-4 text-3xl font-bold">{data.name}</h2>
-        <p className="font-serif max-w-md text-pretty text-gray-600 print:text-[12px]">
+        <h2 className="mb-4 text-3xl font-bold">{data.name}</h2>
+        <p className="max-w-md text-pretty text-gray-600 print:text-[12px]">
           {data.about}
         </p>
         <div className="flex justify-center gap-x-2 pt-1 text-sm text-muted-foreground sm:justify-start print:hidden">
