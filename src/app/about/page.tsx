@@ -130,6 +130,60 @@ export default function AboutPage() {
                   {project.description}
                 </p>
 
+                {project.problems && (
+                  <>
+                    <em className="block mt-4 font-semibold not-italic">
+                      Problem.
+                    </em>
+                    <ul className="mt-2 list-disc space-y-1">
+                      {project.problems.map((problem) => (
+                        <li
+                          key={problem}
+                          className="ml-5 text-gray-600 text-pretty text-sm"
+                        >
+                          {problem}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {project.expectations && (
+                  <>
+                    <em className="block mt-4 font-semibold not-italic">
+                      Expectation.
+                    </em>
+                    <ul className="mt-2 list-disc space-y-1">
+                      {project.expectations.map((expectation) => (
+                        <li
+                          key={expectation}
+                          className="ml-5 text-gray-600 text-pretty text-sm"
+                        >
+                          {expectation}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {project.challenges && (
+                  <>
+                    <em className="block mt-4 font-semibold not-italic">
+                      Challenge.
+                    </em>
+                    <ul className="mt-2 list-disc space-y-1">
+                      {project.challenges.map((challenge) => (
+                        <li
+                          key={challenge}
+                          className="ml-5 text-gray-600 text-pretty text-sm"
+                        >
+                          {challenge}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
                 <em className="block mt-4 font-semibold not-italic">Task.</em>
                 <ul className="mt-2 list-disc space-y-1">
                   {project.tasks.map((task) => (
