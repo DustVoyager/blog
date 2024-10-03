@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/layouts/theme/Provider";
 import Header from "@/layouts/Header";
 import Footer from "@/layouts/Footer";
-import { baseDomain, blogDesc, blogName, blogThumbnail } from "@/config/const";
+import { baseDomain, blogDesc, blogName } from "@/config/const";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseDomain),
@@ -13,14 +13,14 @@ export const metadata: Metadata = {
     title: blogName,
     description: blogDesc,
     siteName: blogName,
-    images: [blogThumbnail],
+    images: ["/thumbnail.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: blogName,
     description: blogDesc,
-    images: [blogThumbnail],
+    images: ["/thumbnail.png"],
   },
 };
 
