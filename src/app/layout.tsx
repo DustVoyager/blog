@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/layouts/theme/Provider";
 import Header from "@/layouts/Header";
 import Footer from "@/layouts/Footer";
 import { baseDomain, blogDesc, blogName } from "@/config/const";
+import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseDomain),
@@ -37,6 +38,7 @@ export default function RootLayout({
           <main className="mt-[64px] flex flex-1 flex-col">{children}</main>
           <Footer />
         </ThemeProvider>
+        <GoogleAnalytics gaId="G-C4F73LMPKW" />
       </body>
     </html>
   );
