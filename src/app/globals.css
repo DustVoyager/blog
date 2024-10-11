@@ -5,20 +5,20 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: AritaBuri;
+  font-family: "AritaBuri";
   font-weight: 500;
   font-style: normal;
   font-display: swap;
-  src: url(https://cdn.jsdelivr.net/gh/webfontworld/amore/AritaBuri-Medium.woff2)
+  src: url("https://cdn.jsdelivr.net/gh/fonts-archive/AritaBuri/AritaBuri-Medium.woff2")
     format("woff2");
 }
 
 @font-face {
-  font-family: AritaBuri;
+  font-family: "AritaBuri";
   font-weight: 600;
   font-style: normal;
   font-display: swap;
-  src: url(https://cdn.jsdelivr.net/gh/webfontworld/amore/AritaBuri-SemiBold.woff2)
+  src: url("https://cdn.jsdelivr.net/gh/fonts-archive/AritaBuri/AritaBuri-SemiBold.woff2")
     format("woff2");
 }
 
