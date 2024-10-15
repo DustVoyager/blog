@@ -1,26 +1,9 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css");
+@import url("https://cdn.jsdelivr.net/gh/taevel02/typeface-arita/arita.min.css");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@font-face {
-  font-family: "AritaBuri";
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/fonts-archive/AritaBuri/AritaBuri-Medium.woff2")
-    format("woff2");
-}
-
-@font-face {
-  font-family: "AritaBuri";
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-  src: url("https://cdn.jsdelivr.net/gh/fonts-archive/AritaBuri/AritaBuri-SemiBold.woff2")
-    format("woff2");
-}
 
 @layer base {
   * {
@@ -83,5 +66,5 @@
   --radius: 0.5rem;
 
   /* font */
-  --font-serif: "AritaBuri";
+  --font-serif: "Arita Buri";
 }
