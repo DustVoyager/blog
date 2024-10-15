@@ -23,7 +23,7 @@ export default function Header() {
     >
       <div className="mx-auto flex w-full max-w-[800px] items-center justify-between px-5 sm:px-6">
         <h1 className="text-xl whitespace-nowrap text-gray-800 font-bold font-mono">
-          <Link href="/blog">DVEE</Link>
+          <Link href="/blog">VOYAGER</Link>
         </h1>
         <nav>
           <ul className="mt-1 flex h-[64px] w-full items-center justify-between">
