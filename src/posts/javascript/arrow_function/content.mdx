@@ -141,7 +141,7 @@ this 외에도 super, arguments, new.target 등을 바인딩하지 않는다.
 
 # 9. function - etc.
 
-## 9-1. `name` property of function
+## 9-1. name property of function
 
 ```js
 function a() {}
@@ -185,7 +185,7 @@ console.log(h.name);
 
 ```js
 const person = {
-  _name: "jennie",
+  _name: "제니",
   get name() {
     return this._name;
   },
@@ -198,7 +198,7 @@ console.log(descriptor.get.name);
 console.log(descriptor.set.name);
 ```
 
-## 9-2. `new.target`
+## 9-2. new.target
 
 [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new.target]()
 
