@@ -1,0 +1,163 @@
+---
+title: "css-in-js 라이브러리 비교"
+desc: css in js 라이브러리 비교, Styled-Components, Emotion, Vanilla Extract 장점, 사용 방법, 설치 방법
+date: 2024-10-23
+thumbnail: /posts/css-in-js.png
+---
+
+# CSS-in-JS 라이브러리 비교: Styled-Components, Emotion, Vanilla Extract
+
+CSS-in-JS는 컴포넌트 단위로 스타일을 관리할 수 있는 방식으로, React와 같은 프레임워크에서 특히 인기를 끌고 있습니다. 이 글에서는 CSS-in-JS의 대표적인 라이브러리인 `Styled-Components`, `Emotion`, 그리고 `Vanilla Extract`를 비교해보고, 각 라이브러리의 특징과 설치 방법, 사용 방법을 살펴보겠습니다.
+
+## 1. Styled-Components
+
+[Styled-Components](https://styled-components.com)는 CSS-in-JS의 대표적인 라이브러리로, 컴포넌트 기반의 스타일링을 가능하게 해줍니다. 이 라이브러리는 ES6 템플릿 리터럴을 사용하여 CSS 스타일을 작성하고, 각 컴포넌트에 고유한 클래스를 생성하여 스타일 충돌을 방지합니다.
+
+### 1-1. 설치 방법
+
+```bash
+npm install styled-components
+```
+
+또는
+
+```bash
+yarn add styled-components
+```
+
+### 1-2. 사용 방법
+
+```tsx
+import styled from "styled-components";
+
+const Button = styled.button`
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #2980b9;
+  }
+`;
+
+const App = () => {
+  return <Button>Click Me</Button>;
+};
+```
+
+### 1-3. 장점
+
+- **컴포넌트와 스타일의 결합**: 각 컴포넌트가 독립적인 스타일을 가지므로 스타일의 전역 충돌을 방지할 수 있습니다.
+- **가독성 높은 코드**: CSS와 자바스크립트를 한 곳에서 관리할 수 있어 코드가 직관적입니다.
+- **테마 관리**: `ThemeProvider`를 통해 전역 테마를 손쉽게 설정할 수 있어, 디자인 일관성을 유지할 수 있습니다.
+- **서버 사이드 렌더링(SSR) 지원**: Next.js와 같은 SSR 프레임워크에서 원활하게 동작합니다.
+
+## 2. Emotion
+
+[Emotion](https://emotion.sh/docs/introduction)은 성능 최적화와 유연성을 제공하는 CSS-in-JS 라이브러리입니다. `styled-components`와 유사하게 컴포넌트 기반의 스타일링을 제공하지만, 성능과 경량화에 더 중점을 두고 있습니다. `styled`와 `css` 두 가지 스타일링 방식이 모두 가능합니다.
+
+### 2-1. 설치 방법
+
+```bash
+npm install @emotion/react @emotion/styled
+```
+
+또는
+
+```bash
+yarn add @emotion/react @emotion/styled
+```
+
+### 2-2. 사용 방법
+
+```tsx
+/** @jsxImportSource @emotion/react */
+import { css } from "@emotion/react";
+import styled from "@emotion/styled";
+
+const Button = styled.button`
+  background-color: #e74c3c;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #c0392b;
+  }
+`;
+
+const textStyle = css`
+  font-size: 18px;
+  color: #2c3e50;
+`;
+
+const App = () => {
+  return (
+    <div>
+      <p css={textStyle}>Emotion 라이브러리 사용 예시입니다.</p>
+      <Button>Click Me</Button>
+    </div>
+  );
+};
+```
+
+### 2-3. 장점
+
+- **경량성과 성능**: 스타일을 미리 컴파일하여 런타임 성능을 최적화하고, 번들 크기를 최소화합니다.
+- **유연한 사용 방식**: `styled` 함수와 `css` 함수를 사용해 스타일을 선언할 수 있어 상황에 맞게 다양한 스타일링 방식이 가능합니다.
+- **서버 사이드 렌더링(SSR)**: 성능 최적화된 SSR을 지원하여 SEO 성능 개선과 초기 로딩 속도 최적화가 가능합니다.
+- **클래스 이름의 직관성**: 자동으로 생성된 클래스 이름이 직관적이어서 디버깅이 수월합니다.
+
+## 3. Vanilla Extract
+
+[Vanilla Extract](https://vanilla-extract.style/)는 CSS-in-JS 라이브러리 중에서도 빌드 타임에 CSS 파일을 생성하는 방식으로 동작하는 독특한 라이브러리입니다. CSS 파일이 정적으로 생성되므로 런타임 성능에 전혀 영향을 미치지 않으며, 타입 안전성을 보장하는 것이 큰 장점입니다.
+
+### 3-1. 설치 방법
+
+```bash
+npm install @vanilla-extract/css
+```
+
+또는
+
+```bash
+yarn add @vanilla-extract/css
+```
+
+### 3-2. 사용 방법
+
+```tsx
+import { style } from "@vanilla-extract/css";
+
+const buttonStyle = style({
+  backgroundColor: "#2ecc71",
+  color: "white",
+  padding: "10px 20px",
+  border: "none",
+  borderRadius: "5px",
+  cursor: "pointer",
+  ":hover": {
+    backgroundColor: "#27ae60",
+  },
+});
+
+const App = () => {
+  return <button className={buttonStyle}>Click Me</button>;
+};
+```
+
+### 3-3. 장점
+
+- **정적 CSS 생성**: 런타임에 자바스크립트를 통해 스타일을 적용하지 않고, 정적인 CSS 파일을 생성하여 성능 최적화가 가능합니다.
+- **타입 안전성**: TypeScript와 완벽히 통합되어 타입 안전한 스타일링을 제공합니다.
+- **디자인 시스템과의 통합**: 디자인 시스템과 함께 사용하기 매우 적합하며, 디자인 토큰을 쉽게 적용할 수 있습니다.
+- **서버 사이드 렌더링에 유리**: CSS 파일을 미리 생성하므로, SSR 환경에서 매우 높은 성능을 유지할 수 있습니다.
+
+## 결론
+
+이 글에서는 세 가지 대표적인 CSS-in-JS 라이브러리인 `Styled-Components`, `Emotion`, `Vanilla Extract`를 비교해보았습니다. 각 라이브러리는 저마다의 특징과 장점을 가지고 있으며, 프로젝트의 요구사항에 따라 적합한 라이브러리를 선택할 수 있습니다. **스타일과 컴포넌트의 강한 결합**이 필요하다면 `Styled-Components`, **성능 최적화와 유연성**이 중요하다면 `Emotion`, **정적 CSS 생성과 타입 안전성**이 중요한 프로젝트에서는 `Vanilla Extract`를 선택할 수 있습니다.
