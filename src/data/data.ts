@@ -2,7 +2,7 @@ import IconGithub from "@/components/icon/Github";
 
 export const data = {
   name: "오수빈",
-  about: "같이 일하고 싶은 개발자 오수빈입니다.",
+  about: "같이 일하고 싶은 개발자",
   introduce:
     "프로젝트의 아이데이션 단계부터 배포까지 모든 과정에 참여하며 사용자 중심의 웹 어플리케이션을 구축해왔습니다. 마크업 개발자의 경험으로 웹표준/웹 접근성에 강점을 가지고 있으며, 이를 통해 다양한 환경에서 사용자들에게 최적의 경험을 제공하기 위해 고민하고 있습니다.",
   contact: {
