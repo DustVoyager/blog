@@ -1,0 +1,77 @@
+---
+title: nextjs 15 버전 업데이트 변경 사항
+desc: nextjs 15 버전으로 업데이트 되면서 변경 사항들을 정리하였습니다. next 15 async request api cookies, params
+date: 2024-10-30
+thumbnail: /posts/nextjs.png
+---
+
+![](/posts/nextjs.png)
+
+# Nextjs 15 버전 업데이트에 따른 변경 사항
+
+Nextjs 15버전이 [Nextjs blog](https://nextjs.org/blog/next-15)를 통해 정식 릴리즈 된 것을 알렸습니다.
+
+이제 기존 설치 방법대로 nextjs를 설치하면 package.json에서
+아래와 같이 next 버전이 **15.0.2** react 버전이 **19 rc** 로 되어있습니다.
+
+```js
+{
+  "dependencies": {
+    "react": "19.0.0-rc-02c0e824-20241028",
+    "react-dom": "19.0.0-rc-02c0e824-20241028",
+    "next": "15.0.2"
+  },
+}
+```
+
+버전이 변경됨에 따라 코드에서도 수정해야 하는 사항들이 생겼는데요,
+[NextJs 공식문서 업그레이드](https://nextjs.org/docs/app/building-your-application/upgrading/version-15) 를 보면서 간단하게 정리해 보겠습니다.
+
+업그레이드문서에는 리액트에 대한 내용도 있지만 여기서는 Next에 대한 내용을 다루도록 하겠습니다.
+( 중요사항은, react와 react-dom의 최소 버전은 **19 version**입니다. )
+
+## 1. 비동기 요청 API - 중요 변경 사항
+
+Next 15로 업그레이드 된 부분들 중에서 가장 먼저 다루고 있고,
+중요 변경 사항이라고 얘기하고 있는 `비동기 요청 API` 대해서 먼저 다뤄보겠습니다.
+
+### 1-1. 변경 된 api
+
+- cookies
+- header
+- draftMode
+- params
+- searchParams in page.js
+
+### 1-2. 변경해보기
+
+일부 항목에서는 권장하는 사항들과 임시로 사용할 수 있는 코드가 있는데, 권장하는 내용들로 코드를 확인해보겠습니다.
+코드를 살펴보면, 공통적으로 `await`를 추가하면 됩니다.
+
+`Cookies`
+
+```ts
+import { cookies } from "next/headers";
+
+// Before
+const cookieStore = cookies();
+const token = cookieStore.get("token");
+
+// After
+const cookieStore = await cookies(); // await가 추가 되었습니다.
+const token = cookieStore.get("token");
+```
+
+`headers`
+
+```ts
+import { headers } from "next/headers";
+
+// Before
+const headersList = headers();
+const userAgent = headersList.get("user-agent");
+
+// After
+const headersList = await headers(); // await가 추가 되었습니다.
+const userAgent = headersList.get("user-agent");
+```
