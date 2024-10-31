@@ -75,3 +75,41 @@ const userAgent = headersList.get("user-agent");
 const headersList = await headers(); // await가 추가 되었습니다.
 const userAgent = headersList.get("user-agent");
 ```
+
+`params & searchParams`
+
+```ts
+// Before
+type Params = { slug: string };
+
+export function generateMetadata({ params }: { params: Params }) {
+  const { slug } = params;
+}
+
+export default async function Layout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Params;
+}) {
+  const { slug } = params;
+}
+
+// After
+type Params = Promise<{ slug: string }>; // Promise
+
+export async function generateMetadata({ params }: { params: Params }) {
+  const { slug } = await params; // await
+}
+
+export default async function Layout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Params;
+}) {
+  const { slug } = await params;
+}
+```
