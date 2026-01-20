@@ -38,8 +38,8 @@ export default function RootLayout({
           <main className="mt-[64px] flex flex-1 flex-col">{children}</main>
           <Footer />
         </ThemeProvider>
-        <GoogleAnalytics gaId="G-C4F73LMPKW" />
-        <GoogleTagManager gtmId="G-C4F73LMPKW" />
+        <GoogleAnalytics gaId="GTM-5TG599HX" />
+        <GoogleTagManager gtmId="GTM-5TG599HX" />
       </body>
     </html>
   );
