@@ -30,10 +30,11 @@ const parsePost = async (postPath: string): Promise<Post> => {
 // MDX의 개요 파싱
 // url, cg path, cg name, slug
 export const parsePostAbstract = (postPath: string) => {
-  const filePath = postPath
-    .slice(postPath.indexOf(BASE_PATH))
-    .replace(`${BASE_PATH}/`, "")
-    .replace(".mdx", "");
+  // POSTS_PATH 기준으로 상대 경로 추출
+  const relativePath = path.relative(POSTS_PATH, postPath);
+
+  // 경로 구분자를 /로 정규화하고 .mdx 제거
+  const filePath = relativePath.replace(/\\/g, "/").replace(".mdx", "");
 
   const [categoryPath, slug] = filePath.split("/");
   const url = `/blog/${categoryPath}/${slug}`;
