@@ -1,0 +1,755 @@
+---
+title: "WebSocket 완벽 가이드: 실시간 양방향 통신"
+desc: WebSocket의 동작 원리부터 실전 구현까지, 실시간 웹 애플리케이션 개발의 핵심 기술
+date: 2026-02-06
+thumbnail: /posts/devops.png
+---
+
+![](/posts/websocket.png)
+
+# WebSocket 완벽 가이드: 실시간 양방향 통신
+
+WebSocket은 클라이언트와 서버 간 양방향 실시간 통신을 가능하게 하는 프로토콜입니다. 채팅, 실시간 알림, 협업 도구, 게임 등 즉각적인 데이터 전송이 필요한 현대 웹 애플리케이션의 필수 기술입니다.
+
+## 1. WebSocket이란?
+
+WebSocket은 HTTP와 달리 **지속적인 연결**을 유지하여 서버와 클라이언트가 자유롭게 데이터를 주고받을 수 있는 프로토콜입니다. RFC 6455 표준으로 정의되어 있으며, 모든 주요 브라우저에서 지원합니다.
+
+### 1.1 전통적인 HTTP의 한계
+
+**HTTP의 특징:**
+- 요청-응답 모델 (클라이언트가 먼저 요청)
+- 단방향 통신
+- 매 요청마다 연결 생성/종료
+- 헤더 오버헤드
+
+**실시간 통신 시도 (WebSocket 이전):**
+```javascript
+// Polling: 주기적으로 서버에 요청
+setInterval(() => {
+  fetch('/api/messages')
+    .then(res => res.json())
+    .then(data => updateUI(data));
+}, 1000); // 비효율적: 불필요한 요청 반복
+```
+
+```javascript
+// Long Polling: 서버가 응답을 지연시켜 대기
+function longPoll() {
+  fetch('/api/messages?timeout=30000')
+    .then(res => res.json())
+    .then(data => {
+      updateUI(data);
+      longPoll(); // 재귀 호출
+    });
+}
+// 여전히 비효율적: 연결 반복 생성
+```
+
+### 1.2 WebSocket의 장점
+
+✅ **양방향 통신**: 서버/클라이언트 모두 데이터 전송 가능
+✅ **낮은 지연시간**: 지속 연결로 즉각 전송
+✅ **낮은 오버헤드**: 작은 프레임 헤더 (2-14 바이트)
+✅ **효율적**: 불필요한 HTTP 헤더 제거
+✅ **실시간성**: 이벤트 발생 시 즉시 전달
+
+![](/posts/websocket-vs-http.png)
+
+---
+
+## 2. WebSocket 동작 원리
+
+### 2.1 연결 수립 (Handshake)
+
+WebSocket은 HTTP 업그레이드 요청으로 시작합니다.
+
+**클라이언트 요청:**
+```http
+GET /chat HTTP/1.1
+Host: example.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+```
+
+**서버 응답:**
+```http
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+```
+
+**101 Switching Protocols:** HTTP에서 WebSocket 프로토콜로 전환
+
+### 2.2 데이터 프레임
+
+연결 후에는 작은 프레임 단위로 데이터 전송합니다.
+
+```
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-------+-+-------------+-------------------------------+
+|F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+|I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+|N|V|V|V|       |S|             |   (if payload len==126/127)   |
+| |1|2|3|       |K|             |                               |
++-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+|     Extended payload length continued, if payload len == 127  |
++ - - - - - - - - - - - - - - - +-------------------------------+
+|                               |Masking-key, if MASK set to 1  |
++-------------------------------+-------------------------------+
+| Masking-key (continued)       |          Payload Data         |
++-------------------------------- - - - - - - - - - - - - - - - +
+:                     Payload Data continued ...                :
++ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+|                     Payload Data continued ...                |
++---------------------------------------------------------------+
+```
+
+**프레임 타입 (opcode):**
+- `0x0`: 연속 프레임
+- `0x1`: 텍스트 프레임
+- `0x2`: 바이너리 프레임
+- `0x8`: 연결 종료
+- `0x9`: Ping
+- `0xA`: Pong
+
+---
+
+## 3. 클라이언트 구현 (JavaScript)
+
+### 3.1 기본 사용법
+
+```javascript
+// WebSocket 연결 생성
+const socket = new WebSocket('ws://example.com/socket');
+
+// 연결 성공
+socket.addEventListener('open', (event) => {
+  console.log('WebSocket 연결됨');
+  socket.send('Hello Server!');
+});
+
+// 메시지 수신
+socket.addEventListener('message', (event) => {
+  console.log('서버로부터 메시지:', event.data);
+});
+
+// 에러 처리
+socket.addEventListener('error', (error) => {
+  console.error('WebSocket 에러:', error);
+});
+
+// 연결 종료
+socket.addEventListener('close', (event) => {
+  console.log('WebSocket 연결 종료:', event.code, event.reason);
+});
+```
+
+### 3.2 실전 예제: 채팅 애플리케이션
+
+```javascript
+class ChatClient {
+  constructor(url) {
+    this.url = url;
+    this.socket = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+  }
+
+  connect() {
+    this.socket = new WebSocket(this.url);
+
+    this.socket.onopen = () => {
+      console.log('채팅 서버 연결 성공');
+      this.reconnectAttempts = 0;
+      this.onConnectionOpen?.();
+    };
+
+    this.socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        this.handleMessage(message);
+      } catch (error) {
+        console.error('메시지 파싱 에러:', error);
+      }
+    };
+
+    this.socket.onerror = (error) => {
+      console.error('WebSocket 에러:', error);
+      this.onError?.(error);
+    };
+
+    this.socket.onclose = (event) => {
+      console.log('연결 종료:', event.code);
+      this.handleReconnect();
+    };
+  }
+
+  handleMessage(message) {
+    switch (message.type) {
+      case 'chat':
+        this.onChatMessage?.(message);
+        break;
+      case 'userJoined':
+        this.onUserJoined?.(message);
+        break;
+      case 'userLeft':
+        this.onUserLeft?.(message);
+        break;
+      case 'typing':
+        this.onTyping?.(message);
+        break;
+      default:
+        console.warn('알 수 없는 메시지 타입:', message.type);
+    }
+  }
+
+  handleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+
+      console.log(`${delay}ms 후 재연결 시도...`);
+      setTimeout(() => this.connect(), delay);
+    } else {
+      console.error('최대 재연결 시도 횟수 초과');
+      this.onMaxReconnectReached?.();
+    }
+  }
+
+  sendMessage(text) {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({
+        type: 'chat',
+        text,
+        timestamp: Date.now()
+      }));
+    } else {
+      console.error('WebSocket이 연결되지 않음');
+    }
+  }
+
+  sendTypingIndicator() {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({ type: 'typing' }));
+    }
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.close(1000, '정상 종료');
+    }
+  }
+}
+
+// 사용 예시
+const chat = new ChatClient('ws://localhost:3000/chat');
+
+chat.onConnectionOpen = () => {
+  console.log('채팅방에 입장했습니다');
+};
+
+chat.onChatMessage = (message) => {
+  appendMessage(message.user, message.text);
+};
+
+chat.onUserJoined = (message) => {
+  showNotification(`${message.user}님이 입장했습니다`);
+};
+
+chat.connect();
+
+// 메시지 전송
+document.getElementById('sendBtn').addEventListener('click', () => {
+  const input = document.getElementById('messageInput');
+  chat.sendMessage(input.value);
+  input.value = '';
+});
+```
+
+### 3.3 React Hook 예제
+
+```javascript
+import { useEffect, useRef, useState } from 'react';
+
+function useWebSocket(url) {
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastMessage, setLastMessage] = useState(null);
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    const socket = new WebSocket(url);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      setIsConnected(true);
+    };
+
+    socket.onmessage = (event) => {
+      setLastMessage(JSON.parse(event.data));
+    };
+
+    socket.onclose = () => {
+      setIsConnected(false);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [url]);
+
+  const sendMessage = (data) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(data));
+    }
+  };
+
+  return { isConnected, lastMessage, sendMessage };
+}
+
+// 컴포넌트에서 사용
+function ChatComponent() {
+  const { isConnected, lastMessage, sendMessage } = useWebSocket('ws://localhost:3000');
+
+  return (
+    <div>
+      <div>연결 상태: {isConnected ? '🟢 연결됨' : '🔴 끊김'}</div>
+      <div>마지막 메시지: {lastMessage?.text}</div>
+      <button onClick={() => sendMessage({ text: 'Hello!' })}>
+        전송
+      </button>
+    </div>
+  );
+}
+```
+
+![](/posts/websocket-flow.png)
+
+---
+
+## 4. 서버 구현
+
+### 4.1 Node.js (ws 라이브러리)
+
+```javascript
+const WebSocket = require('ws');
+const http = require('http');
+
+// HTTP 서버 생성
+const server = http.createServer();
+
+// WebSocket 서버 생성
+const wss = new WebSocket.Server({ server });
+
+// 연결된 클라이언트 관리
+const clients = new Set();
+
+wss.on('connection', (ws, req) => {
+  console.log('새 클라이언트 연결:', req.socket.remoteAddress);
+
+  // 클라이언트 추가
+  clients.add(ws);
+
+  // 환영 메시지
+  ws.send(JSON.stringify({
+    type: 'welcome',
+    message: '채팅방에 오신 것을 환영합니다!'
+  }));
+
+  // 메시지 수신
+  ws.on('message', (data) => {
+    try {
+      const message = JSON.parse(data);
+      console.log('수신:', message);
+
+      // 모든 클라이언트에게 브로드캐스트
+      broadcast(message);
+    } catch (error) {
+      console.error('메시지 처리 에러:', error);
+    }
+  });
+
+  // 연결 종료
+  ws.on('close', () => {
+    console.log('클라이언트 연결 종료');
+    clients.delete(ws);
+
+    broadcast({
+      type: 'userLeft',
+      count: clients.size
+    });
+  });
+
+  // 에러 처리
+  ws.on('error', (error) => {
+    console.error('WebSocket 에러:', error);
+    clients.delete(ws);
+  });
+});
+
+// 브로드캐스트 함수
+function broadcast(message) {
+  const data = JSON.stringify(message);
+
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(data);
+    }
+  });
+}
+
+// Ping/Pong으로 연결 유지
+setInterval(() => {
+  clients.forEach((client) => {
+    if (client.isAlive === false) {
+      return client.terminate();
+    }
+
+    client.isAlive = false;
+    client.ping();
+  });
+}, 30000);
+
+wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
+});
+
+server.listen(3000, () => {
+  console.log('WebSocket 서버 실행 중: ws://localhost:3000');
+});
+```
+
+### 4.2 Express와 통합
+
+```javascript
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// REST API
+app.get('/api/status', (req, res) => {
+  res.json({
+    connections: wss.clients.size,
+    uptime: process.uptime()
+  });
+});
+
+// WebSocket 처리
+wss.on('connection', (ws) => {
+  // WebSocket 로직...
+});
+
+server.listen(3000);
+```
+
+### 4.3 방(Room) 기반 채팅
+
+```javascript
+class ChatRoom {
+  constructor(id) {
+    this.id = id;
+    this.clients = new Map(); // userId -> WebSocket
+  }
+
+  addClient(userId, ws) {
+    this.clients.set(userId, ws);
+    this.broadcast({
+      type: 'userJoined',
+      userId,
+      count: this.clients.size
+    });
+  }
+
+  removeClient(userId) {
+    this.clients.delete(userId);
+    this.broadcast({
+      type: 'userLeft',
+      userId,
+      count: this.clients.size
+    });
+  }
+
+  broadcast(message, excludeUserId = null) {
+    const data = JSON.stringify(message);
+
+    this.clients.forEach((ws, userId) => {
+      if (userId !== excludeUserId && ws.readyState === WebSocket.OPEN) {
+        ws.send(data);
+      }
+    });
+  }
+
+  sendToUser(userId, message) {
+    const ws = this.clients.get(userId);
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+}
+
+// 방 관리
+const rooms = new Map();
+
+wss.on('connection', (ws, req) => {
+  let currentRoom = null;
+  let userId = null;
+
+  ws.on('message', (data) => {
+    const message = JSON.parse(data);
+
+    switch (message.type) {
+      case 'join':
+        userId = message.userId;
+        const roomId = message.roomId;
+
+        if (!rooms.has(roomId)) {
+          rooms.set(roomId, new ChatRoom(roomId));
+        }
+
+        currentRoom = rooms.get(roomId);
+        currentRoom.addClient(userId, ws);
+        break;
+
+      case 'chat':
+        if (currentRoom) {
+          currentRoom.broadcast({
+            type: 'chat',
+            userId,
+            text: message.text,
+            timestamp: Date.now()
+          });
+        }
+        break;
+
+      case 'leave':
+        if (currentRoom) {
+          currentRoom.removeClient(userId);
+          currentRoom = null;
+        }
+        break;
+    }
+  });
+
+  ws.on('close', () => {
+    if (currentRoom) {
+      currentRoom.removeClient(userId);
+    }
+  });
+});
+```
+
+---
+
+## 5. 고급 기능
+
+### 5.1 인증 및 보안
+
+```javascript
+// 클라이언트: 토큰 포함 연결
+const token = localStorage.getItem('authToken');
+const socket = new WebSocket(`ws://example.com?token=${token}`);
+
+// 서버: 토큰 검증
+const jwt = require('jsonwebtoken');
+
+wss.on('connection', (ws, req) => {
+  const url = new URL(req.url, 'ws://localhost');
+  const token = url.searchParams.get('token');
+
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    ws.userId = user.id;
+
+    // 인증 성공
+    ws.send(JSON.stringify({ type: 'authenticated', user }));
+  } catch (error) {
+    ws.close(1008, 'Unauthorized');
+    return;
+  }
+
+  // 이후 처리...
+});
+```
+
+### 5.2 압축
+
+```javascript
+const WebSocket = require('ws');
+const zlib = require('zlib');
+
+const wss = new WebSocket.Server({
+  perMessageDeflate: {
+    zlibDeflateOptions: {
+      chunkSize: 1024,
+      memLevel: 7,
+      level: 3
+    },
+    zlibInflateOptions: {
+      chunkSize: 10 * 1024
+    },
+    threshold: 1024 // 1KB 이상만 압축
+  }
+});
+```
+
+### 5.3 하트비트 (연결 유지)
+
+```javascript
+// 서버
+function heartbeat() {
+  this.isAlive = true;
+}
+
+wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', heartbeat);
+});
+
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      return ws.terminate();
+    }
+
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+// 클라이언트
+socket.addEventListener('close', () => {
+  clearInterval(heartbeatInterval);
+});
+
+const heartbeatInterval = setInterval(() => {
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: 'ping' }));
+  }
+}, 30000);
+```
+
+![](/posts/websocket-architecture.png)
+
+---
+
+## 6. 프로덕션 고려사항
+
+### 6.1 스케일링
+
+**단일 서버의 한계:**
+- 연결 수 제한 (보통 수만 ~ 수십만)
+- 단일 장애점 (SPOF)
+
+**해결책: Redis Pub/Sub**
+```javascript
+const Redis = require('ioredis');
+const pub = new Redis();
+const sub = new Redis();
+
+// 메시지 발행
+pub.publish('chat-room-1', JSON.stringify(message));
+
+// 메시지 구독
+sub.subscribe('chat-room-1');
+sub.on('message', (channel, message) => {
+  // 현재 서버의 클라이언트에게 전송
+  broadcastToLocalClients(JSON.parse(message));
+});
+```
+
+### 6.2 로드 밸런싱
+
+```nginx
+# Nginx 설정
+upstream websocket {
+    ip_hash; # 같은 클라이언트는 같은 서버로
+    server backend1:3000;
+    server backend2:3000;
+    server backend3:3000;
+}
+
+server {
+    location /socket {
+        proxy_pass http://websocket;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 3600s;
+    }
+}
+```
+
+### 6.3 모니터링
+
+```javascript
+// 메트릭 수집
+const metrics = {
+  connections: 0,
+  messagesReceived: 0,
+  messagesSent: 0,
+  errors: 0
+};
+
+wss.on('connection', (ws) => {
+  metrics.connections++;
+
+  ws.on('message', () => {
+    metrics.messagesReceived++;
+  });
+
+  ws.on('close', () => {
+    metrics.connections--;
+  });
+
+  ws.on('error', () => {
+    metrics.errors++;
+  });
+});
+
+// 모니터링 엔드포인트
+app.get('/metrics', (req, res) => {
+  res.json(metrics);
+});
+```
+
+---
+
+## 7. WebSocket vs 대안 기술
+
+| 기술 | 장점 | 단점 | 적합한 경우 |
+|------|------|------|-------------|
+| **WebSocket** | 양방향, 낮은 지연, 효율적 | 복잡한 구현, 방화벽 이슈 | 채팅, 게임, 협업 툴 |
+| **SSE** | 간단한 구현, HTTP 기반 | 단방향만 가능 | 실시간 알림, 피드 |
+| **Long Polling** | 넓은 호환성 | 비효율적, 높은 지연 | 레거시 브라우저 지원 |
+| **HTTP/2 Push** | HTTP 표준 | 제한적 브라우저 지원 | 정적 리소스 push |
+
+---
+
+## 8. 마무리
+
+WebSocket은 실시간 웹 애플리케이션의 핵심 기술입니다. 양방향 통신이 필요한 경우 최선의 선택이며, 적절한 에러 처리와 재연결 로직으로 안정적인 서비스를 구축할 수 있습니다.
+
+**핵심 요약:**
+- 양방향 실시간 통신에 최적화
+- 낮은 오버헤드와 지연시간
+- 재연결 로직 필수
+- 프로덕션에서는 스케일링과 모니터링 고려
+
+## Reference
+
+- [RFC 6455 - WebSocket Protocol](https://datatracker.ietf.org/doc/html/rfc6455)
+- [MDN WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+- [ws 라이브러리](https://github.com/websockets/ws)
+- [Socket.IO 문서](https://socket.io/docs/)
