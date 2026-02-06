@@ -1,0 +1,964 @@
+---
+title: "Server-Sent Events(SSE) 완벽 가이드"
+desc: SSE의 동작 원리부터 실전 구현까지, 단방향 실시간 통신의 간결한 해결책
+date: 2026-02-06
+thumbnail: /posts/devops.png
+---
+
+![](/posts/sse.png)
+
+# Server-Sent Events(SSE) 완벽 가이드
+
+Server-Sent Events(SSE)는 서버에서 클라이언트로 단방향 실시간 데이터를 전송하는 HTML5 표준 기술입니다. WebSocket보다 간단하면서도 실시간 알림, 라이브 피드, 주식 시세 등 서버 푸시가 필요한 다양한 상황에서 효과적으로 사용할 수 있습니다.
+
+## 1. SSE란?
+
+SSE는 HTTP 프로토콜 위에서 동작하는 **서버 푸시 기술**입니다. 한 번 연결을 맺으면 서버가 클라이언트에게 지속적으로 데이터를 전송할 수 있습니다.
+
+### 1.1 주요 특징
+
+✅ **단방향 통신**: 서버 → 클라이언트만 가능
+✅ **자동 재연결**: 연결이 끊기면 자동으로 재시도
+✅ **이벤트 ID 지원**: 재연결 시 마지막 이벤트부터 이어받기 가능
+✅ **텍스트 기반**: UTF-8 텍스트 데이터 전송
+✅ **HTTP 기반**: 기존 인프라 활용 가능
+✅ **간단한 구현**: WebSocket보다 훨씬 단순
+
+### 1.2 SSE vs WebSocket
+
+| 특징 | SSE | WebSocket |
+|------|-----|-----------|
+| **방향성** | 단방향 (서버→클라이언트) | 양방향 |
+| **프로토콜** | HTTP | 독립 프로토콜 |
+| **재연결** | 자동 | 수동 구현 필요 |
+| **데이터 형식** | 텍스트만 | 텍스트/바이너리 |
+| **브라우저 지원** | 대부분 (IE 제외) | 모든 모던 브라우저 |
+| **구현 복잡도** | 낮음 | 높음 |
+| **적합한 경우** | 알림, 피드, 모니터링 | 채팅, 게임, 협업 툴 |
+
+![](/posts/sse-vs-websocket.png)
+
+---
+
+## 2. SSE 동작 원리
+
+### 2.1 연결 수립
+
+클라이언트가 SSE 엔드포인트에 HTTP GET 요청을 보냅니다.
+
+**클라이언트 요청:**
+```http
+GET /events HTTP/1.1
+Host: example.com
+Accept: text/event-stream
+Cache-Control: no-cache
+```
+
+**서버 응답:**
+```http
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+
+data: Hello World
+
+```
+
+### 2.2 이벤트 스트림 형식
+
+SSE는 특정 형식의 텍스트로 데이터를 전송합니다.
+
+```
+data: 첫 번째 메시지
+
+data: 두 번째 메시지
+id: 2
+
+event: userJoined
+data: {"username": "Alice"}
+id: 3
+
+data: 여러 줄에 걸친
+data: 메시지도 가능합니다
+id: 4
+
+: 이것은 주석입니다
+
+```
+
+**필드 설명:**
+- `data:` 실제 데이터 (필수, 여러 줄 가능)
+- `event:` 이벤트 타입 (선택, 기본값 "message")
+- `id:` 이벤트 ID (선택, 재연결 시 사용)
+- `retry:` 재연결 대기 시간(ms) (선택)
+- `:` 주석 (클라이언트에서 무시)
+
+**중요:** 각 이벤트는 빈 줄(`\n\n`)로 구분됩니다.
+
+![](/posts/sse-protocol.png)
+
+---
+
+## 3. 클라이언트 구현
+
+### 3.1 기본 사용법
+
+```javascript
+// EventSource 객체 생성
+const eventSource = new EventSource('/api/events');
+
+// 기본 메시지 수신 (event 타입 없는 경우)
+eventSource.addEventListener('message', (event) => {
+  console.log('새 메시지:', event.data);
+});
+
+// 특정 이벤트 타입 수신
+eventSource.addEventListener('userJoined', (event) => {
+  const data = JSON.parse(event.data);
+  console.log(`${data.username}님이 입장했습니다`);
+});
+
+// 연결 성공
+eventSource.addEventListener('open', () => {
+  console.log('SSE 연결 성공');
+});
+
+// 에러 처리
+eventSource.addEventListener('error', (error) => {
+  console.error('SSE 에러:', error);
+
+  if (eventSource.readyState === EventSource.CLOSED) {
+    console.log('연결이 종료되었습니다');
+  }
+});
+
+// 연결 종료
+// eventSource.close();
+```
+
+### 3.2 실전 예제: 실시간 알림
+
+```javascript
+class NotificationService {
+  constructor(url) {
+    this.url = url;
+    this.eventSource = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+  }
+
+  connect() {
+    // 기존 연결이 있으면 종료
+    if (this.eventSource) {
+      this.eventSource.close();
+    }
+
+    this.eventSource = new EventSource(this.url);
+
+    this.eventSource.onopen = () => {
+      console.log('알림 서비스 연결됨');
+      this.reconnectAttempts = 0;
+      this.onConnected?.();
+    };
+
+    // 일반 알림
+    this.eventSource.addEventListener('notification', (event) => {
+      const notification = JSON.parse(event.data);
+      this.showNotification(notification);
+    });
+
+    // 긴급 알림
+    this.eventSource.addEventListener('urgent', (event) => {
+      const notification = JSON.parse(event.data);
+      this.showUrgentNotification(notification);
+    });
+
+    // 시스템 메시지
+    this.eventSource.addEventListener('system', (event) => {
+      const message = JSON.parse(event.data);
+      this.handleSystemMessage(message);
+    });
+
+    this.eventSource.onerror = (error) => {
+      console.error('SSE 에러:', error);
+
+      if (this.eventSource.readyState === EventSource.CLOSED) {
+        this.handleReconnect();
+      }
+    };
+  }
+
+  handleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+
+      console.log(`${delay}ms 후 재연결 시도...`);
+      setTimeout(() => this.connect(), delay);
+    } else {
+      console.error('최대 재연결 시도 횟수 초과');
+      this.onMaxReconnectReached?.();
+    }
+  }
+
+  showNotification(notification) {
+    // 브라우저 알림 표시
+    if (Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: notification.icon,
+        tag: notification.id
+      });
+    }
+
+    // UI 업데이트
+    this.onNotification?.(notification);
+  }
+
+  showUrgentNotification(notification) {
+    // 긴급 알림은 소리와 함께
+    const audio = new Audio('/notification-urgent.mp3');
+    audio.play();
+
+    this.showNotification({
+      ...notification,
+      urgent: true
+    });
+  }
+
+  handleSystemMessage(message) {
+    switch (message.type) {
+      case 'maintenance':
+        this.onMaintenance?.(message);
+        break;
+      case 'update':
+        this.onUpdate?.(message);
+        break;
+      default:
+        console.log('시스템 메시지:', message);
+    }
+  }
+
+  disconnect() {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+  }
+}
+
+// 사용 예시
+const notifications = new NotificationService('/api/notifications');
+
+notifications.onConnected = () => {
+  console.log('알림을 받을 준비가 되었습니다');
+};
+
+notifications.onNotification = (notification) => {
+  addNotificationToUI(notification);
+};
+
+notifications.onMaintenance = (message) => {
+  showMaintenanceBanner(message);
+};
+
+notifications.connect();
+```
+
+### 3.3 React Hook 예제
+
+```javascript
+import { useEffect, useState, useRef } from 'react';
+
+function useSSE(url, options = {}) {
+  const [data, setData] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState(null);
+  const eventSourceRef = useRef(null);
+
+  useEffect(() => {
+    const eventSource = new EventSource(url);
+    eventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      setIsConnected(true);
+      setError(null);
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const parsedData = JSON.parse(event.data);
+        setData(parsedData);
+        options.onMessage?.(parsedData);
+      } catch (err) {
+        setData(event.data);
+        options.onMessage?.(event.data);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      setIsConnected(false);
+      setError(err);
+      options.onError?.(err);
+    };
+
+    // 클린업
+    return () => {
+      eventSource.close();
+    };
+  }, [url]);
+
+  return { data, isConnected, error };
+}
+
+// 컴포넌트에서 사용
+function LiveFeed() {
+  const { data, isConnected } = useSSE('/api/feed');
+
+  return (
+    <div>
+      <div className="status">
+        {isConnected ? '🟢 실시간' : '🔴 연결 끊김'}
+      </div>
+      {data && (
+        <div className="feed-item">
+          <h3>{data.title}</h3>
+          <p>{data.content}</p>
+          <small>{new Date(data.timestamp).toLocaleString()}</small>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 여러 이벤트 타입 처리
+function useSSEMultiEvent(url, eventHandlers) {
+  const [isConnected, setIsConnected] = useState(false);
+  const eventSourceRef = useRef(null);
+
+  useEffect(() => {
+    const eventSource = new EventSource(url);
+    eventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => setIsConnected(true);
+    eventSource.onerror = () => setIsConnected(false);
+
+    // 각 이벤트 타입에 대한 핸들러 등록
+    Object.entries(eventHandlers).forEach(([eventType, handler]) => {
+      eventSource.addEventListener(eventType, (event) => {
+        handler(JSON.parse(event.data));
+      });
+    });
+
+    return () => eventSource.close();
+  }, [url]);
+
+  return { isConnected };
+}
+
+// 사용 예시
+function Dashboard() {
+  const { isConnected } = useSSEMultiEvent('/api/events', {
+    stockPrice: (data) => updateStockPrice(data),
+    news: (data) => addNewsItem(data),
+    alert: (data) => showAlert(data)
+  });
+
+  return <div>연결: {isConnected ? '✓' : '✗'}</div>;
+}
+```
+
+![](/posts/sse-client-flow.png)
+
+---
+
+## 4. 서버 구현
+
+### 4.1 Node.js (Express)
+
+```javascript
+const express = require('express');
+const app = express();
+
+// SSE 엔드포인트
+app.get('/api/events', (req, res) => {
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // CORS 설정 (필요한 경우)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // 초기 연결 확인 메시지
+  res.write('data: Connected\n\n');
+
+  // 주기적으로 데이터 전송
+  const intervalId = setInterval(() => {
+    const data = {
+      timestamp: Date.now(),
+      message: 'Hello from server'
+    };
+
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  }, 1000);
+
+  // 클라이언트 연결 종료 시 정리
+  req.on('close', () => {
+    clearInterval(intervalId);
+    console.log('클라이언트 연결 종료');
+  });
+});
+
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+});
+```
+
+### 4.2 실전 예제: 실시간 알림 시스템
+
+```javascript
+const express = require('express');
+const app = express();
+
+// 연결된 클라이언트 관리
+class SSEManager {
+  constructor() {
+    this.clients = new Map(); // userId -> response object
+  }
+
+  addClient(userId, res) {
+    this.clients.set(userId, res);
+    console.log(`클라이언트 추가: ${userId}, 총 ${this.clients.size}명`);
+
+    // 연결 확인 메시지
+    this.sendToClient(userId, {
+      type: 'connected',
+      message: '알림 서비스에 연결되었습니다'
+    });
+  }
+
+  removeClient(userId) {
+    this.clients.delete(userId);
+    console.log(`클라이언트 제거: ${userId}, 총 ${this.clients.size}명`);
+  }
+
+  sendToClient(userId, data, eventType = 'message', id = null) {
+    const client = this.clients.get(userId);
+    if (!client) return;
+
+    try {
+      if (eventType !== 'message') {
+        client.write(`event: ${eventType}\n`);
+      }
+      if (id) {
+        client.write(`id: ${id}\n`);
+      }
+      client.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch (error) {
+      console.error(`전송 실패: ${userId}`, error);
+      this.removeClient(userId);
+    }
+  }
+
+  broadcast(data, eventType = 'message') {
+    this.clients.forEach((client, userId) => {
+      this.sendToClient(userId, data, eventType);
+    });
+  }
+
+  sendToMultiple(userIds, data, eventType = 'message') {
+    userIds.forEach(userId => {
+      this.sendToClient(userId, data, eventType);
+    });
+  }
+}
+
+const sseManager = new SSEManager();
+
+// 인증 미들웨어 (실제로는 JWT 등 사용)
+const authenticate = (req, res, next) => {
+  const userId = req.query.userId;
+  if (!userId) {
+    return res.status(401).send('Unauthorized');
+  }
+  req.userId = userId;
+  next();
+};
+
+// SSE 엔드포인트
+app.get('/api/notifications', authenticate, (req, res) => {
+  // SSE 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Nginx 버퍼링 비활성화
+
+  const userId = req.userId;
+
+  // 클라이언트 추가
+  sseManager.addClient(userId, res);
+
+  // Keep-alive (30초마다 주석 전송)
+  const keepAliveId = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 30000);
+
+  // 연결 종료 처리
+  req.on('close', () => {
+    clearInterval(keepAliveId);
+    sseManager.removeClient(userId);
+  });
+});
+
+// 알림 전송 API (다른 서비스에서 호출)
+app.post('/api/send-notification', express.json(), (req, res) => {
+  const { userId, notification } = req.body;
+
+  sseManager.sendToClient(userId, notification, 'notification');
+
+  res.json({ success: true });
+});
+
+// 브로드캐스트 API
+app.post('/api/broadcast', express.json(), (req, res) => {
+  const { message } = req.body;
+
+  sseManager.broadcast(message, 'system');
+
+  res.json({
+    success: true,
+    recipients: sseManager.clients.size
+  });
+});
+
+// 상태 확인
+app.get('/api/status', (req, res) => {
+  res.json({
+    connections: sseManager.clients.size,
+    clients: Array.from(sseManager.clients.keys())
+  });
+});
+
+app.listen(3000);
+```
+
+### 4.3 재연결 및 이벤트 ID 처리
+
+```javascript
+// 이벤트 저장소 (실제로는 Redis 등 사용)
+const eventStore = new Map();
+let eventId = 0;
+
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Last-Event-ID 헤더로 재연결 감지
+  const lastEventId = req.headers['last-event-id'];
+
+  if (lastEventId) {
+    // 마지막 이벤트 이후의 모든 이벤트 전송
+    const missedEvents = Array.from(eventStore.entries())
+      .filter(([id]) => id > parseInt(lastEventId))
+      .sort(([a], [b]) => a - b);
+
+    missedEvents.forEach(([id, data]) => {
+      res.write(`id: ${id}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    });
+  }
+
+  // 새 이벤트 리스너 등록
+  const listener = (data) => {
+    const currentEventId = ++eventId;
+
+    // 이벤트 저장 (최근 100개만 유지)
+    eventStore.set(currentEventId, data);
+    if (eventStore.size > 100) {
+      const oldestId = Math.min(...eventStore.keys());
+      eventStore.delete(oldestId);
+    }
+
+    // 클라이언트에 전송
+    res.write(`id: ${currentEventId}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  eventEmitter.on('newEvent', listener);
+
+  req.on('close', () => {
+    eventEmitter.off('newEvent', listener);
+  });
+});
+
+// 재연결 시간 설정
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // 재연결 대기 시간 설정 (5초)
+  res.write('retry: 5000\n\n');
+
+  // ... 나머지 코드
+});
+```
+
+![](/posts/sse-server-flow.png)
+
+---
+
+## 5. 고급 기능
+
+### 5.1 이벤트 타입별 처리
+
+```javascript
+// 서버: 여러 타입의 이벤트 전송
+app.get('/api/feed', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // 주식 가격
+  setInterval(() => {
+    res.write('event: stockPrice\n');
+    res.write(`data: ${JSON.stringify({ symbol: 'AAPL', price: 150.25 })}\n\n`);
+  }, 1000);
+
+  // 뉴스
+  setInterval(() => {
+    res.write('event: news\n');
+    res.write(`data: ${JSON.stringify({ title: 'Breaking News', url: '/news/123' })}\n\n`);
+  }, 5000);
+
+  // 알림
+  setInterval(() => {
+    res.write('event: alert\n');
+    res.write(`data: ${JSON.stringify({ message: 'System update' })}\n\n`);
+  }, 10000);
+});
+
+// 클라이언트: 이벤트 타입별 처리
+const eventSource = new EventSource('/api/feed');
+
+eventSource.addEventListener('stockPrice', (event) => {
+  const data = JSON.parse(event.data);
+  updateStockPrice(data.symbol, data.price);
+});
+
+eventSource.addEventListener('news', (event) => {
+  const data = JSON.parse(event.data);
+  addNewsItem(data.title, data.url);
+});
+
+eventSource.addEventListener('alert', (event) => {
+  const data = JSON.parse(event.data);
+  showAlert(data.message);
+});
+```
+
+### 5.2 압축
+
+```javascript
+const compression = require('compression');
+
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['accept'] === 'text/event-stream') {
+      return false; // SSE는 압축하지 않음
+    }
+    return compression.filter(req, res);
+  }
+}));
+```
+
+### 5.3 프록시 고려사항
+
+```javascript
+// Nginx 설정
+location /api/events {
+    proxy_pass http://backend;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 24h;
+}
+
+// Express: X-Accel-Buffering 헤더
+res.setHeader('X-Accel-Buffering', 'no');
+```
+
+---
+
+## 6. 프로덕션 고려사항
+
+### 6.1 스케일링
+
+```javascript
+// Redis Pub/Sub로 여러 서버 간 이벤트 공유
+const Redis = require('ioredis');
+const pub = new Redis();
+const sub = new Redis();
+
+// 구독
+sub.subscribe('notifications');
+sub.on('message', (channel, message) => {
+  const data = JSON.parse(message);
+  sseManager.sendToClient(data.userId, data.notification);
+});
+
+// 발행 (다른 서버에서)
+pub.publish('notifications', JSON.stringify({
+  userId: '123',
+  notification: { message: 'Hello' }
+}));
+```
+
+### 6.2 연결 수 모니터링
+
+```javascript
+// 메트릭 수집
+const metrics = {
+  activeConnections: 0,
+  totalConnections: 0,
+  messagesSent: 0
+};
+
+app.get('/metrics', (req, res) => {
+  res.json({
+    ...metrics,
+    activeConnections: sseManager.clients.size
+  });
+});
+```
+
+### 6.3 에러 처리 및 복구
+
+```javascript
+// 클라이언트: 에러 재시도 로직
+class RobustSSE {
+  constructor(url, maxRetries = 5) {
+    this.url = url;
+    this.maxRetries = maxRetries;
+    this.retryCount = 0;
+    this.connect();
+  }
+
+  connect() {
+    this.eventSource = new EventSource(this.url);
+
+    this.eventSource.onopen = () => {
+      this.retryCount = 0;
+      console.log('연결 성공');
+    };
+
+    this.eventSource.onerror = (error) => {
+      console.error('SSE 에러:', error);
+
+      if (this.eventSource.readyState === EventSource.CLOSED) {
+        this.reconnect();
+      }
+    };
+  }
+
+  reconnect() {
+    if (this.retryCount < this.maxRetries) {
+      this.retryCount++;
+      const delay = Math.min(1000 * Math.pow(2, this.retryCount), 30000);
+
+      console.log(`${delay}ms 후 재연결... (${this.retryCount}/${this.maxRetries})`);
+
+      setTimeout(() => {
+        this.eventSource.close();
+        this.connect();
+      }, delay);
+    } else {
+      console.error('최대 재연결 시도 횟수 초과');
+    }
+  }
+
+  close() {
+    this.eventSource.close();
+  }
+}
+```
+
+---
+
+## 7. 실전 사용 사례
+
+### 7.1 실시간 주식 시세
+
+```javascript
+// 서버
+app.get('/api/stock/:symbol', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const symbol = req.params.symbol;
+
+  const interval = setInterval(() => {
+    const price = getStockPrice(symbol); // 실제 API 호출
+
+    res.write(`event: price\n`);
+    res.write(`data: ${JSON.stringify({
+      symbol,
+      price,
+      change: calculateChange(price),
+      timestamp: Date.now()
+    })}\n\n`);
+  }, 1000);
+
+  req.on('close', () => clearInterval(interval));
+});
+
+// 클라이언트
+const stockFeed = new EventSource('/api/stock/AAPL');
+stockFeed.addEventListener('price', (event) => {
+  const data = JSON.parse(event.data);
+  updateStockWidget(data);
+});
+```
+
+### 7.2 빌드/배포 진행 상황
+
+```javascript
+// 서버
+app.get('/api/build/:id/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const buildId = req.params.id;
+
+  // 빌드 이벤트 리스너
+  buildEmitter.on(buildId, (event) => {
+    res.write(`event: ${event.type}\n`);
+    res.write(`data: ${JSON.stringify(event.data)}\n\n`);
+
+    if (event.type === 'completed' || event.type === 'failed') {
+      // 빌드 완료 시 연결 종료
+      res.end();
+    }
+  });
+
+  req.on('close', () => {
+    buildEmitter.off(buildId);
+  });
+});
+
+// 클라이언트
+const buildStream = new EventSource(`/api/build/${buildId}/events`);
+
+buildStream.addEventListener('started', (e) => {
+  console.log('빌드 시작');
+});
+
+buildStream.addEventListener('progress', (e) => {
+  const data = JSON.parse(e.data);
+  updateProgressBar(data.percentage);
+});
+
+buildStream.addEventListener('log', (e) => {
+  const data = JSON.parse(e.data);
+  appendLog(data.message);
+});
+
+buildStream.addEventListener('completed', (e) => {
+  console.log('빌드 완료');
+  buildStream.close();
+});
+```
+
+### 7.3 AI 스트리밍 응답 (ChatGPT 스타일)
+
+```javascript
+// 서버
+app.get('/api/chat/stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const prompt = req.query.prompt;
+
+  try {
+    // OpenAI 스트리밍 (예시)
+    const stream = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [{ role: 'user', content: prompt }],
+      stream: true
+    });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || '';
+
+      if (content) {
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (error) {
+    res.write(`event: error\n`);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+// 클라이언트
+function streamChat(prompt) {
+  const eventSource = new EventSource(`/api/chat/stream?prompt=${encodeURIComponent(prompt)}`);
+  let fullResponse = '';
+
+  eventSource.addEventListener('message', (event) => {
+    if (event.data === '[DONE]') {
+      eventSource.close();
+      onComplete(fullResponse);
+      return;
+    }
+
+    const { content } = JSON.parse(event.data);
+    fullResponse += content;
+    onChunk(content);
+  });
+
+  eventSource.addEventListener('error', (event) => {
+    const { error } = JSON.parse(event.data);
+    onError(error);
+    eventSource.close();
+  });
+}
+```
+
+![](/posts/sse-use-cases.png)
+
+---
+
+## 8. 마무리
+
+SSE는 서버에서 클라이언트로의 단방향 통신이 필요한 경우 WebSocket보다 간단하고 효율적인 선택입니다. HTTP 기반이므로 기존 인프라를 그대로 활용할 수 있으며, 자동 재연결 기능으로 안정성도 뛰어납니다.
+
+**SSE를 선택해야 하는 경우:**
+- 실시간 알림, 피드, 모니터링
+- 서버에서 클라이언트로만 데이터 전송
+- 간단한 구현이 필요한 경우
+- HTTP 인프라를 활용하고 싶은 경우
+
+**WebSocket을 선택해야 하는 경우:**
+- 양방향 실시간 통신 필요
+- 바이너리 데이터 전송
+- 매우 낮은 지연시간 요구
+- 클라이언트에서도 빈번한 데이터 전송
+
+## Reference
+
+- [MDN EventSource API](https://developer.mozilla.org/en-US/docs/Web/API/EventSource)
+- [HTML Standard - Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+- [SSE vs WebSocket](https://ably.com/topic/server-sent-events-vs-websockets)
+- [Express SSE Implementation](https://masteringjs.io/tutorials/express/server-sent-events)
