@@ -12,6 +12,7 @@ import {
 import { baseDomain } from "@/config/const";
 import Giscus from "@/components/post_detail/Giscus";
 import FloatingButton from "@/components/common/FloatingButton";
+import ContentViewTracker from "@/components/analytics/ContentViewTracker";
 
 type Props = {
   params: { category: string; slug: string };
@@ -61,6 +62,7 @@ export default async function Page({ params: { category, slug } }: Props) {
 
   return (
     <div className="prose mx-auto w-full max-w-[800px] px-5 sm:px-6">
+      <ContentViewTracker contentId={slug} contentType="work" />
       <PostHeader post={post} />
       <TocTop toc={toc} />
       <article className="relative">
