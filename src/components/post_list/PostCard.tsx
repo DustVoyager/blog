@@ -1,16 +1,24 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
 import { Post } from "@/config/types";
 import { CalendarDays, Clock3 } from "lucide-react";
+import { trackContentClick } from "@/lib/gtm";
 
 interface Props {
   post: Post;
+  rank?: number;
 }
 
-const PostCard = ({ post }: Props) => {
+const PostCard = ({ post, rank }: Props) => {
+  const handleClick = () => {
+    trackContentClick(post.slug, rank);
+  };
+
   return (
-    <Link href={post.url}>
+    <Link href={post.url} onClick={handleClick}>
       <li className="flex h-full flex-col gap-3 overflow-hidden rounded-md border shadow-md transition hover:shadow-xl">
         <div className="relative aspect-video w-full rounded-t-md border-b">
           <Image
