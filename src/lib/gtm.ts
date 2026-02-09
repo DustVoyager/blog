@@ -128,3 +128,46 @@ export const trackContentClick = (contentId: string, rank?: number) => {
     rank: rank,
   });
 };
+
+// section_view 이벤트 (섹션 노출)
+export const trackSectionView = (sectionId: string) => {
+  pushToDataLayer({
+    event: "section_view",
+    section_id: sectionId,
+  });
+};
+
+// section_dwell 이벤트 (섹션 체류)
+export const trackSectionDwell = (sectionId: string, activeSec: number) => {
+  pushToDataLayer({
+    event: "section_dwell",
+    section_id: sectionId,
+    active_sec: activeSec,
+  });
+};
+
+// component_impression 이벤트 (컴포넌트 노출)
+export const trackComponentImpression = (
+  componentId: string,
+  additionalData?: Record<string, any>
+) => {
+  pushToDataLayer({
+    event: "component_impression",
+    component_id: componentId,
+    ...additionalData,
+  });
+};
+
+// viewport_position 이벤트 (컴포넌트 위치)
+export const trackViewportPosition = (
+  componentId: string,
+  position: "above_fold" | "below_fold",
+  additionalData?: Record<string, any>
+) => {
+  pushToDataLayer({
+    event: "viewport_position",
+    component_id: componentId,
+    ...additionalData,
+    viewport_position: position, // 더 명확한 필드명 (충돌 방지)
+  });
+};
