@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryDetail } from "@/config/types";
+import { trackClick } from "@/lib/gtm";
 
 interface CategoryListProps {
   categoryList: CategoryDetail[];
@@ -26,6 +27,7 @@ const CategoryList = ({
   const router = useRouter();
 
   const onCategoryChange = (value: string) => {
+    trackClick(`category-select-${value}`, "category_filter", 0);
     if (value === "all") {
       router.push("/blog");
     } else {
